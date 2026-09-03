@@ -79,3 +79,27 @@ export const IconX = (p: P) => (
     <path d="M18 6 6 18M6 6l12 12" />
   </svg>
 )
+export const IconBuilding = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M3 21h18M5 21V5a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v16M15 21V9h3a1 1 0 0 1 1 1v11" />
+    <path d="M8 8h1M8 12h1M11 8h1M11 12h1" />
+  </svg>
+)
+export const IconGauge = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
+    <path d="m13.4 12.6 3.6-3.6" />
+    <path d="M4 18a9 9 0 1 1 16 0" />
+  </svg>
+)
+export const IconClock = (p: P) => (
+  <svg {...base} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </svg>
+)
+export const IconLink = (p: P) => (
+  <svg {...base} {...p}>
+    <path d="M9 15l6-6M10 6l1-1a4 4 0 0 1 6 6l-1 1M14 18l-1 1a4 4 0 0 1-6-6l1-1" />
+  </svg>
+)

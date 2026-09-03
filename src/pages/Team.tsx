@@ -6,7 +6,7 @@ import type { TeamRole, WorkspaceData } from '../lib/types'
 import { exportWorkspaceJson } from '../lib/exporters'
 
 export default function Team() {
-  const { data, addMember, removeMember, replaceAll, resetToSeed } = useStore()
+  const { data, addMember, removeMember, importData, resetAll } = useStore()
   const [name, setName] = useState('')
   const [role, setRole] = useState<TeamRole>('ISR')
   const [email, setEmail] = useState('')
@@ -29,9 +29,16 @@ export default function Team() {
       try {
         const parsed = JSON.parse(String(reader.result)) as WorkspaceData
         if (!parsed.team && !parsed.customers && !parsed.deals) throw new Error('bad shape')
-        replaceAll(parsed)
+        const next: WorkspaceData = {
+          team: parsed.team ?? [],
+          companies: parsed.companies ?? [],
+          customers: parsed.customers ?? [],
+          deals: parsed.deals ?? [],
+          log: parsed.log ?? [],
+        }
+        importData(next)
         setImportMsg(
-          `Imported ${parsed.customers?.length ?? 0} customers, ${parsed.deals?.length ?? 0} deals, ${parsed.team?.length ?? 0} members.`,
+          `Imported ${next.companies.length} companies, ${next.customers.length} contacts, ${next.deals.length} deals, ${next.team.length} members into D1.`,
         )
       } catch {
         setImportMsg('Could not read that file — expected an ISR Workspace JSON export.')
@@ -92,8 +99,8 @@ export default function Team() {
       <Card className="mt-6 p-5">
         <h2 className="mb-1 text-lg font-bold text-slate-900">Dataset control</h2>
         <p className="mb-4 text-sm text-slate-500">
-          You own the master dataset. Export it to share or back up, import a controlled copy to
-          distribute to the team, or reset to sample data.
+          You own the master dataset, stored in the shared Cloudflare D1 database — everyone on the
+          team sees the same records. Export a backup, import a JSON copy to replace it, or clear it.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" onClick={() => exportWorkspaceJson(data)}>
@@ -116,13 +123,13 @@ export default function Team() {
           <Button
             variant="danger"
             onClick={() => {
-              if (confirm('Reset to sample data? This replaces the current dataset.')) {
-                resetToSeed()
-                setImportMsg('Reset to sample data.')
+              if (confirm('Clear ALL companies, contacts and deals from the shared database? This cannot be undone.')) {
+                resetAll()
+                setImportMsg('Cleared all records from the database.')
               }
             }}
           >
-            Reset to sample
+            Clear all data
           </Button>
         </div>
         {importMsg && (

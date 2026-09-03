@@ -7,6 +7,16 @@ export interface TeamMember {
   email?: string
 }
 
+export interface Company {
+  id: string
+  name: string
+  website?: string
+  city?: string
+  focus: boolean
+  notes?: string
+  createdAt: string
+}
+
 export type CustomerStatus =
   | 'New'
   | 'Assigned'
@@ -30,13 +40,13 @@ export interface Customer {
   email?: string
   phone?: string
   company?: string
+  companyId?: string
   title?: string
   city?: string
   website?: string
   source?: string
   status: CustomerStatus
   focus: boolean
-  /** ISR team member this record is assigned to for outreach. */
   assignedIsrId?: string
   notes?: string
   createdAt: string
@@ -65,22 +75,33 @@ export interface Deal {
   id: string
   title: string
   company: string
+  companyId?: string
   customerId?: string
   value: number
   stage: DealStage
   probability: number
-  /** ISR team member driving early outreach on the deal. */
   isrId?: string
-  /** Sales team member owning the close. */
   salesId?: string
-  startDate: string // ISO yyyy-mm-dd — when work began
-  closeDate: string // ISO yyyy-mm-dd — expected/actual close
+  startDate: string
+  closeDate: string
   notes?: string
   createdAt: string
 }
 
+export interface ActivityEntry {
+  id: string
+  ts: string
+  actor?: string
+  action: string
+  entity: string
+  entityId?: string
+  summary: string
+}
+
 export interface WorkspaceData {
   team: TeamMember[]
+  companies: Company[]
   customers: Customer[]
   deals: Deal[]
+  log: ActivityEntry[]
 }
