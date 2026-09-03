@@ -7,11 +7,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "start": "npm run build && wrangler dev",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
-    "db:init": "wrangler d1 execute isr-workspace --file=./schema.sql",
+    "db:init": "wrangler d1 execute isr-workspace --local --file=./schema.sql",
+    "db:seed": "wrangler d1 execute isr-workspace --local --file=./seed.sql",
     "db:init:remote": "wrangler d1 execute isr-workspace --remote --file=./schema.sql",
-    "cf:typegen": "wrangler types",
+    "db:seed:remote": "wrangler d1 execute isr-workspace --remote --file=./seed.sql",
     "lint": "tsc -b --noEmit"
   },
   "dependencies": {
@@ -19,7 +21,6 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.0.12",
     "@cloudflare/workers-types": "^5.20260831.1",
     "@tailwindcss/vite": "^4.1.11",
     "@types/react": "^18.3.12",

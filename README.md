@@ -34,40 +34,51 @@ generated from the *Focused List — PhishSheriff* contact sheet
 
 ## Local development
 
+Front-end only (fast UI iteration, `/api` not served):
+
 ```bash
 npm install
-npm run db:init          # create tables in the local D1
-npx wrangler d1 execute isr-workspace --local --file=./seed.sql   # load the dataset
-npm run dev              # Vite + Worker + local D1 at http://localhost:5173
+npm run dev            # Vite at http://localhost:5173
 ```
 
-The Vite dev server runs the Worker with a local D1 (Miniflare) — the `/api`
-routes and the SPA are served together, exactly as in production.
+Full stack (Worker + SPA + local D1), which mirrors production:
+
+```bash
+npm run db:init        # create tables in the local D1
+npm run db:seed        # load the Focused List dataset locally
+npm start              # build + wrangler dev at http://localhost:8787
+```
 
 ## Deploy to Cloudflare
 
-1. **Create the D1 database** (once):
+1. **Create the D1 database** (once) and paste its id into
+   [`wrangler.jsonc`](./wrangler.jsonc) (replace `REPLACE_WITH_YOUR_D1_DATABASE_ID`):
    ```bash
    npx wrangler d1 create isr-workspace
    ```
-   Copy the printed `database_id` into [`wrangler.jsonc`](./wrangler.jsonc)
-   (replace `REPLACE_WITH_YOUR_D1_DATABASE_ID`).
 
 2. **Create the schema and load the data** in the remote database:
    ```bash
    npm run db:init:remote
-   npx wrangler d1 execute isr-workspace --remote --file=./seed.sql   # optional seed
+   npm run db:seed:remote     # optional — loads the imported dataset
    ```
 
-3. **Deploy** the Worker + assets:
+3. **Deploy** (builds the SPA to `dist/`, then publishes the Worker + assets):
    ```bash
    npm run deploy
    ```
 
-That publishes the SPA and the API to your Worker URL, backed by D1. To update,
-run `npm run deploy` again. If you connect the repo to Cloudflare's Git
-integration instead, set the build command to `npm run build` and the Worker is
-built from `wrangler.jsonc`.
+### Deploying via Cloudflare's Git integration (Workers Builds)
+
+The Worker serves the SPA from `dist/`, so the app **must be built before
+deploy**. In the Workers project's build settings:
+
+- **Build command:** `npm run build`
+- **Deploy command:** `npx wrangler deploy`
+
+(Equivalently, leave the build command empty and set the deploy command to
+`npm run build && npx wrangler deploy`.) The `database_id` in `wrangler.jsonc`
+must be your real D1 id, committed to the repo.
 
 ## API (served by the Worker)
 
@@ -82,9 +93,9 @@ POST   /api/reset                 clear companies, customers, deals
 
 ## Tech stack
 
-React 18 · TypeScript · Vite 6 · Tailwind CSS v4 · Cloudflare Workers · D1 ·
-`@cloudflare/vite-plugin`. No runtime UI libraries — icons, the Gantt chart, the
-scoring engine and the free-text parser are all hand-built.
+React 18 · TypeScript · Vite 6 · Tailwind CSS v4 · Cloudflare Workers (static
+assets) · D1. No runtime UI libraries — icons, the Gantt chart, the scoring
+engine and the free-text parser are all hand-built.
 
 ## Project layout
 
