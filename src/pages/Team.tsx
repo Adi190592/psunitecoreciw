@@ -99,8 +99,8 @@ export default function Team() {
       <Card className="mt-6 p-5">
         <h2 className="mb-1 text-lg font-bold text-slate-900">Dataset control</h2>
         <p className="mb-4 text-sm text-slate-500">
-          You own the master dataset, stored in the shared Cloudflare D1 database — everyone on the
-          team sees the same records. Export a backup, import a JSON copy to replace it, or clear it.
+          Your data is saved in this browser. Export a JSON backup (keep it safe or move it to
+          another device), import a backup to restore, or clear everything and start fresh.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" onClick={() => exportWorkspaceJson(data)}>

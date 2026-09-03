@@ -31,7 +31,7 @@ const NAV: { id: Tab; label: string; icon: JSX.Element }[] = [
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('companies')
-  const { data, status, error } = useStore()
+  const { data } = useStore()
 
   return (
     <div className="min-h-screen">
@@ -43,7 +43,7 @@ export default function App() {
             </span>
             <div className="leading-tight">
               <div className="text-sm font-bold text-slate-900">ISR Workspace</div>
-              <div className="text-[11px] text-slate-400">Outreach · scoring · deals</div>
+              <div className="text-[11px] text-slate-400">Outreach &amp; conversations</div>
             </div>
           </div>
           <nav className="flex items-center gap-1 overflow-x-auto">
@@ -60,56 +60,21 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <div className="ml-auto">
-            <StatusPill status={status} counts={{ c: data.companies.length, k: data.customers.length, d: data.deals.length }} />
+          <div className="ml-auto hidden text-xs text-slate-400 sm:block">
+            {data.companies.length} companies · {data.customers.length} contacts · {data.deals.length} deals
           </div>
         </div>
       </header>
 
-      {status === 'error' && (
-        <div className="mx-auto max-w-7xl px-4 pt-3 sm:px-6">
-          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800">
-            Couldn't reach the database API. Showing what loaded; changes will retry.{' '}
-            {error && <span className="text-amber-500">({error})</span>}
-          </div>
-        </div>
-      )}
-
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6">
-        {status === 'loading' ? (
-          <div className="flex h-64 items-center justify-center text-slate-400">Loading dataset…</div>
-        ) : (
-          <>
-            {tab === 'quick' && <QuickAdd />}
-            {tab === 'companies' && <Companies />}
-            {tab === 'customers' && <Customers />}
-            {tab === 'deals' && <Deals />}
-            {tab === 'scoring' && <Scoring />}
-            {tab === 'activity' && <Activity />}
-            {tab === 'team' && <Team />}
-          </>
-        )}
+        {tab === 'quick' && <QuickAdd />}
+        {tab === 'companies' && <Companies />}
+        {tab === 'customers' && <Customers />}
+        {tab === 'deals' && <Deals />}
+        {tab === 'scoring' && <Scoring />}
+        {tab === 'activity' && <Activity />}
+        {tab === 'team' && <Team />}
       </main>
-    </div>
-  )
-}
-
-function StatusPill({
-  status,
-  counts,
-}: {
-  status: 'loading' | 'ready' | 'error'
-  counts: { c: number; k: number; d: number }
-}) {
-  const color =
-    status === 'ready' ? 'bg-emerald-500' : status === 'loading' ? 'bg-amber-400' : 'bg-rose-500'
-  return (
-    <div className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-500">
-      <span className={`h-2 w-2 rounded-full ${color}`} />
-      <span className="hidden sm:inline">
-        {counts.c} companies · {counts.k} contacts · {counts.d} deals
-      </span>
-      <span className="sm:hidden">D1</span>
     </div>
   )
 }

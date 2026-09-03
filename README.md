@@ -1,112 +1,73 @@
-# ISR Workspace — Outreach, Scoring & Deals on Cloudflare
+# ISR Workspace — Outreach & Conversation Tracking
 
-A shared workspace for an ISR (Inside Sales Rep) team, running as a single
-**Cloudflare Worker** that serves a React SPA **and** a JSON API backed by a
-**Cloudflare D1** database. Everyone on the team works off one dataset the owner
-controls — customers, companies, deals and assignments stay in sync, and every
-change is written to an audit log.
+A simple, single-user web app to **store customer details and track
+conversations**. It's a static single-page app — no server, no database to
+manage. Everything is saved in your browser, with JSON export/import for backup
+or moving between devices.
 
 ## What's inside
 
 | Area | What it does |
 |------|--------------|
-| ⚡ **Quick Add** | Paste free text (a signature, a footer, a note) → it extracts name, title, company, email, phone, city, website into a record. Assign an ISR and save. |
-| 🏢 **Companies** | The master company repository. Every account gets a **comprehensive quality score** (0–100, banded Excellent → Poor) from data completeness + pipeline engagement, with a full factor breakdown, and its linked contacts and deals. |
-| 👥 **Customers** | The outreach dataset. Filter by ISR / status / focus, assign records to ISR members (auto-moves *New* → *Assigned*), edit status inline, export CSV. |
-| 📊 **Deals — Gantt** | Every deal on a timeline from first touch to expected close, colored by stage with a *today* marker. Group by **stage / ISR / Sales**, filter, and give each deal an **ISR owner and a Sales owner**. |
-| 📈 **Scoring** | Portfolio scoring dashboard — average score, quality distribution, top accounts, accounts needing attention, and data-quality coverage across every scoring factor. |
-| 🕑 **Activity** | Full audit log — every create / update / delete / import, who and when. |
-| 🎯 **Team** | Manage ISR & Sales members; export/import the whole dataset as JSON; clear the database. |
+| ⚡ **Quick Add** | Paste free text (a signature, a footer, a note) → it extracts name, title, company, email, phone, city into a record you review and save. |
+| 🏢 **Companies** | The company list. Each account gets a simple quality score from how complete its data is and its pipeline, with a breakdown and its linked contacts/deals. |
+| 👥 **Customers** | Your contact list. Search, filter, set status, mark focus, export CSV. |
+| 📊 **Deals — Gantt** | Deals on a timeline from first touch to expected close, grouped by stage / owner, with a *today* marker. |
+| 📈 **Scoring** | A roll-up of data quality across all companies. |
+| 🕑 **Activity** | A log of every change you make (add / edit / delete / import). |
+| 🎯 **Team** | Optional ISR/Sales names for assignment; export / import / clear your data. |
 
-## Interlinking
+The starter dataset (221 companies · 373 contacts · 69 deals) is imported from
+the *Focused List — PhishSheriff* sheet and loaded on first run. Your edits
+after that are kept in the browser.
 
-Companies, contacts and deals are linked by `companyId`. When you add a customer
-or a deal with a company name that doesn't exist yet, the API **auto-creates the
-company** and links it — so the master repository always reflects what you enter,
-and every change lands in the audit log.
-
-## Data model (D1)
-
-`team`, `companies`, `customers`, `deals`, `activity_log` — see
-[`schema.sql`](./schema.sql). The seeded dataset in [`seed.sql`](./seed.sql) was
-generated from the *Focused List — PhishSheriff* contact sheet
-(221 companies · 373 contacts · 69 deals).
-
-## Local development
-
-Front-end only (fast UI iteration, `/api` not served):
+## Run it
 
 ```bash
 npm install
-npm run dev            # Vite at http://localhost:5173
-```
-
-Full stack (Worker + SPA + local D1), which mirrors production:
-
-```bash
-npm run db:init        # create tables in the local D1
-npm run db:seed        # load the Focused List dataset locally
-npm start              # build + wrangler dev at http://localhost:8787
+npm run dev        # http://localhost:5173
+npm run build      # production build to ./dist
+npm run preview    # preview the production build
 ```
 
 ## Deploy to Cloudflare
 
-1. **Create the D1 database** (once) and paste its id into
-   [`wrangler.jsonc`](./wrangler.jsonc) (replace `REPLACE_WITH_YOUR_D1_DATABASE_ID`):
-   ```bash
-   npx wrangler d1 create isr-workspace
-   ```
+It's a static site, so hosting is trivial — no database, no bindings, no secrets.
 
-2. **Create the schema and load the data** in the remote database:
-   ```bash
-   npm run db:init:remote
-   npm run db:seed:remote     # optional — loads the imported dataset
-   ```
+```bash
+npm run deploy     # builds ./dist and publishes it with Wrangler
+```
 
-3. **Deploy** (builds the SPA to `dist/`, then publishes the Worker + assets):
-   ```bash
-   npm run deploy
-   ```
-
-### Deploying via Cloudflare's Git integration (Workers Builds)
-
-The Worker serves the SPA from `dist/`, so the app **must be built before
-deploy**. In the Workers project's build settings:
+If you deploy via Cloudflare's Git integration, set:
 
 - **Build command:** `npm run build`
-- **Deploy command:** `npx wrangler deploy`
+- **Deploy command:** `npx wrangler deploy`  (or **build output directory** `dist` for a Pages project)
 
-(Equivalently, leave the build command empty and set the deploy command to
-`npm run build && npx wrangler deploy`.) The `database_id` in `wrangler.jsonc`
-must be your real D1 id, committed to the repo.
+## Where's my data?
 
-## API (served by the Worker)
-
-```
-GET    /api/state                 → { team, companies, customers, deals, log }
-POST   /api/{companies|customers|deals|team}      create (auto-links company)
-PATCH  /api/{...}/:id             update
-DELETE /api/{...}/:id             delete (cascades unlink)
-PUT    /api/state                 replace whole dataset (JSON import)
-POST   /api/reset                 clear companies, customers, deals
-```
+In your browser's `localStorage` (key `isr-workspace:v2`). It stays on this
+device and this browser. Use **Team → Export** to download a JSON backup, and
+**Import** to restore it or move it to another device.
 
 ## Tech stack
 
-React 18 · TypeScript · Vite 6 · Tailwind CSS v4 · Cloudflare Workers (static
-assets) · D1. No runtime UI libraries — icons, the Gantt chart, the scoring
-engine and the free-text parser are all hand-built.
+React 18 · TypeScript · Vite 6 · Tailwind CSS v4. No backend, no database, no
+runtime UI libraries — icons, the Gantt chart, the scoring and the free-text
+parser are all hand-built.
 
 ## Project layout
 
 ```
-worker/            Cloudflare Worker: API router (index.ts) + D1 helpers (db.ts)
-schema.sql         D1 tables
-seed.sql           Imported Focused List dataset
 src/
-  lib/             types, api client, store (API-backed), scoring, relations, parse
-  components/      ui, icons, Gantt, Score (ring/badge/factors)
-  pages/           QuickAdd, Companies, Customers, Deals, Scoring, Activity, Team
-  App.tsx          shell + navigation + live D1 status
-wrangler.jsonc     Worker + assets + D1 binding
+  lib/
+    types.ts        data model
+    store.tsx       state + localStorage persistence + change log
+    seed.json       starter dataset (imported from the Focused List sheet)
+    scoring.ts      company quality score
+    relations.ts    links companies ↔ contacts ↔ deals
+    parse.ts        free-text → contact fields (Quick Add)
+  components/       ui, icons, Gantt, Score
+  pages/            QuickAdd, Companies, Customers, Deals, Scoring, Activity, Team
+  App.tsx           shell + navigation
+wrangler.jsonc      static-assets hosting config (no server)
 ```
