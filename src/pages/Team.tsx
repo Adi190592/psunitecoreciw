@@ -1,17 +1,14 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useStore } from '../lib/store'
 import { Avatar, Badge, Button, Card, Field, inputCls } from '../components/ui'
-import { IconDownload, IconPlus, IconTrash, IconUpload, IconUsers } from '../components/icons'
-import type { TeamRole, WorkspaceData } from '../lib/types'
-import { exportWorkspaceJson } from '../lib/exporters'
+import { IconPlus, IconTrash, IconUsers } from '../components/icons'
+import type { TeamRole } from '../lib/types'
 
 export default function Team() {
-  const { data, addMember, removeMember, importData, resetAll } = useStore()
+  const { data, addMember, removeMember } = useStore()
   const [name, setName] = useState('')
   const [role, setRole] = useState<TeamRole>('ISR')
   const [email, setEmail] = useState('')
-  const [importMsg, setImportMsg] = useState<string | null>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
 
   const isr = data.team.filter((m) => m.role === 'ISR')
   const sales = data.team.filter((m) => m.role === 'Sales')
@@ -23,38 +20,15 @@ export default function Team() {
     setEmail('')
   }
 
-  function handleImport(file: File) {
-    const reader = new FileReader()
-    reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result)) as WorkspaceData
-        if (!parsed.team && !parsed.customers && !parsed.deals) throw new Error('bad shape')
-        const next: WorkspaceData = {
-          team: parsed.team ?? [],
-          companies: parsed.companies ?? [],
-          customers: parsed.customers ?? [],
-          deals: parsed.deals ?? [],
-          log: parsed.log ?? [],
-        }
-        importData(next)
-        setImportMsg(
-          `Imported ${next.companies.length} companies, ${next.customers.length} contacts, ${next.deals.length} deals, ${next.team.length} members into D1.`,
-        )
-      } catch {
-        setImportMsg('Could not read that file — expected an ISR Workspace JSON export.')
-      }
-    }
-    reader.readAsText(file)
-  }
-
   return (
     <div>
       <header className="mb-5">
         <h1 className="flex items-center gap-2 text-3xl font-bold text-slate-900">
-          <IconUsers width={26} height={26} className="text-slate-700" /> Team &amp; Dataset
+          <IconUsers width={26} height={26} className="text-slate-700" /> Team
         </h1>
         <p className="mt-1 text-slate-500">
-          Manage the ISR and Sales members you assign work to, and control the dataset as the owner.
+          The ISR and Sales members you assign to contacts and deals. Add a name and it becomes
+          selectable across the app.
         </p>
       </header>
 
@@ -64,28 +38,29 @@ export default function Team() {
           <h2 className="mb-3 text-lg font-bold text-slate-900">Add member</h2>
           <div className="space-y-3">
             <Field label="Name">
-              <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} />
+              <input
+                className={inputCls}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
+              />
             </Field>
-            <Field label="Email">
+            <Field label="Email (optional)">
               <input className={inputCls} value={email} onChange={(e) => setEmail(e.target.value)} />
             </Field>
-            <Field label="Role">
-              <select
-                className={inputCls}
-                value={role}
-                onChange={(e) => setRole(e.target.value as TeamRole)}
-              >
-                <option value="ISR">ISR (outreach)</option>
-                <option value="Sales">Sales (closing)</option>
+            <Field label="Team">
+              <select className={inputCls} value={role} onChange={(e) => setRole(e.target.value as TeamRole)}>
+                <option value="ISR">ISR (inside sales rep)</option>
+                <option value="Sales">Sales (closer)</option>
               </select>
             </Field>
             <Button onClick={handleAdd} disabled={!name.trim()} className="w-full justify-center">
-              <IconPlus width={16} height={16} /> Add to team
+              <IconPlus width={16} height={16} /> Add member
             </Button>
           </div>
         </Card>
 
-        {/* Roster */}
+        {/* Rosters */}
         <Card className="p-5 lg:col-span-2">
           <h2 className="mb-3 text-lg font-bold text-slate-900">Roster</h2>
           <div className="grid gap-5 sm:grid-cols-2">
@@ -94,50 +69,6 @@ export default function Team() {
           </div>
         </Card>
       </div>
-
-      {/* Dataset control */}
-      <Card className="mt-6 p-5">
-        <h2 className="mb-1 text-lg font-bold text-slate-900">Dataset control</h2>
-        <p className="mb-4 text-sm text-slate-500">
-          Your data is saved in this browser. Export a JSON backup (keep it safe or move it to
-          another device), import a backup to restore, or clear everything and start fresh.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={() => exportWorkspaceJson(data)}>
-            <IconDownload width={16} height={16} /> Export dataset (JSON)
-          </Button>
-          <Button variant="outline" onClick={() => fileRef.current?.click()}>
-            <IconUpload width={16} height={16} /> Import dataset
-          </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="application/json,.json"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) handleImport(file)
-              e.target.value = ''
-            }}
-          />
-          <Button
-            variant="danger"
-            onClick={() => {
-              if (confirm('Clear ALL companies, contacts and deals from the shared database? This cannot be undone.')) {
-                resetAll()
-                setImportMsg('Cleared all records from the database.')
-              }
-            }}
-          >
-            Clear all data
-          </Button>
-        </div>
-        {importMsg && (
-          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
-            {importMsg}
-          </div>
-        )}
-      </Card>
     </div>
   )
 }

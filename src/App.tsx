@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import { useRef, useState, type JSX } from 'react'
 import QuickAdd from './pages/QuickAdd'
 import Customers from './pages/Customers'
 import Companies from './pages/Companies'
@@ -7,13 +7,18 @@ import Scoring from './pages/Scoring'
 import Activity from './pages/Activity'
 import Team from './pages/Team'
 import { useStore } from './lib/store'
+import { exportWorkspaceJson } from './lib/exporters'
+import type { WorkspaceData } from './lib/types'
 import {
   IconBolt,
   IconBuilding,
   IconChart,
   IconClock,
+  IconDownload,
   IconGauge,
   IconTarget,
+  IconTrash,
+  IconUpload,
   IconUsers,
 } from './components/icons'
 
@@ -60,8 +65,11 @@ export default function App() {
               </button>
             ))}
           </nav>
-          <div className="ml-auto hidden text-xs text-slate-400 sm:block">
-            {data.companies.length} companies · {data.customers.length} contacts · {data.deals.length} deals
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden text-xs text-slate-400 lg:block">
+              {data.companies.length} companies · {data.customers.length} contacts · {data.deals.length} deals
+            </span>
+            <DataControls />
           </div>
         </div>
       </header>
@@ -75,6 +83,66 @@ export default function App() {
         {tab === 'activity' && <Activity />}
         {tab === 'team' && <Team />}
       </main>
+    </div>
+  )
+}
+
+/** Compact backup controls (export / import / clear) for the browser-stored data. */
+function DataControls() {
+  const { data, importData, resetAll } = useStore()
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  function handleImport(file: File) {
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const p = JSON.parse(String(reader.result)) as WorkspaceData
+        if (!p.customers && !p.companies && !p.deals) throw new Error('bad shape')
+        importData({
+          team: p.team ?? [],
+          companies: p.companies ?? [],
+          customers: p.customers ?? [],
+          deals: p.deals ?? [],
+          log: p.log ?? [],
+        })
+      } catch {
+        alert('Could not read that file — expected an ISR Workspace JSON export.')
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  const btn =
+    'grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+
+  return (
+    <div className="flex items-center gap-1">
+      <button className={btn} title="Export backup (JSON)" onClick={() => exportWorkspaceJson(data)}>
+        <IconDownload width={16} height={16} />
+      </button>
+      <button className={btn} title="Import backup (JSON)" onClick={() => fileRef.current?.click()}>
+        <IconUpload width={16} height={16} />
+      </button>
+      <button
+        className={`${btn} hover:border-red-200 hover:bg-red-50 hover:text-red-500`}
+        title="Clear all data"
+        onClick={() => {
+          if (confirm('Clear all data from this browser? Export a backup first if you want to keep it.')) resetAll()
+        }}
+      >
+        <IconTrash width={16} height={16} />
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="application/json,.json"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          if (f) handleImport(f)
+          e.target.value = ''
+        }}
+      />
     </div>
   )
 }
